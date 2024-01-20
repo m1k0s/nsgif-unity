@@ -1,0 +1,13 @@
+UserSettings/
+Library/
+Temp/
+Logs/
+obj/
+build/
+.vs/
+.idea/
+*.sln
+*.csproj
+*.userprefs
+*.user
+Packages/packages-lock.json
