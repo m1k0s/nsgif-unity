@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 [ExecuteAlways]
-public class TestNSGIF : MonoBehaviour
+public class PlayGIF : MonoBehaviour
 {
 	private static readonly int MAIN_TEX_ID = Shader.PropertyToID("_MainTex");
 
