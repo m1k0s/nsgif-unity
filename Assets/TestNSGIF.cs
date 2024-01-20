@@ -8,14 +8,15 @@ public class TestNSGIF : MonoBehaviour
 
 	public string filename = "";
 
-	private NSGIF gif;
 	private Material gifMaterial;
+	private IEnumerator playback;
+	private NSGIF gif = null;
 
 	void OnEnable()
 	{
 		gifMaterial = GetComponent<Renderer>()?.sharedMaterial;
 
-		if(null == gifMaterial)
+		if (null == gifMaterial || string.IsNullOrEmpty(filename))
 		{
 			this.enabled = false;
 			return;
@@ -23,59 +24,58 @@ public class TestNSGIF : MonoBehaviour
 
 		try
 		{
-			if(!string.IsNullOrEmpty(filename))
-			{
-				string path = Application.streamingAssetsPath + "/" + filename;
+			string path = Application.streamingAssetsPath + "/" + filename;
 #if UNITY_ANDROID  && !UNITY_EDITOR
-				// On Android streaming assets path is in the compressed jar; use WWW to uncompress.
-				WWW www = new WWW(path);
-				while(!www.isDone)
-					;
-				gif = new NSGIF(www.bytes);
+			// On Android streaming assets path is in the compressed jar; use WWW to uncompress.
+			WWW www = new WWW(path);
+			while(!www.isDone)
+				;
+			gif = new NSGIF(www.bytes);
 #else
-				gif = new NSGIF(path);
-				//gif = new NSGIF(System.IO.File.ReadAllBytes(path));
+			gif = new NSGIF(path);
+			//gif = new NSGIF(System.IO.File.ReadAllBytes(path));
 #endif
 
-				Texture frame = gif.texture;
-				Debug.LogFormat($"{filename}: width={frame.width} height={frame.height} frames={gif.frameCount}");
-
-				gifMaterial.SetTexture(MAIN_TEX_ID, frame);
-			}
-			else
-			{
-				gifMaterial.SetTexture(MAIN_TEX_ID, null);
-			}
+			playback = Play();
+			StartCoroutine(playback);
 		}
 		catch(System.Exception e)
 		{
 			Debug.LogError($"{GetType()}.OnEnable: {e}");
-			gifMaterial.SetTexture(MAIN_TEX_ID, null);
+			this.enabled = false;
 		}
 	}
 
 	void OnDisable()
 	{
-		if(null != gifMaterial)
+		if (null != playback)
+		{
+			StopCoroutine(playback);
+			playback = null;
+		}
+
+		if (null != gifMaterial)
 		{
 			gifMaterial.SetTexture(MAIN_TEX_ID, null);
 			gifMaterial = null;
 		}
 
-		if(null != gif)
+		if (null != gif)
 		{
-			gif.Destroy();
+			gif.Dispose();
 			gif = null;
 		}
 	}
 
-	void Update()
+	IEnumerator Play()
 	{
-		if(null != gif)
+		(Texture2D frame, int delayMillis) = gif.DecodeNextFrame();
+		gifMaterial.SetTexture(MAIN_TEX_ID, frame);
+
+		while (true)
 		{
-			gif.currentTime += Time.deltaTime;
-			Texture frame = gif.texture;
-			gifMaterial.SetTexture(MAIN_TEX_ID, frame);
+			yield return new WaitForSeconds(delayMillis / 1000.0f);
+			(frame, delayMillis) = gif.DecodeNextFrame();
 		}
 	}
 }
