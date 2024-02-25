@@ -1,5 +1,8 @@
-using UnityEngine;
+using System;
 using System.Collections;
+using System.IO;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace NSGIF
 {
@@ -13,6 +16,7 @@ namespace NSGIF
 		private Material gifMaterial;
 		private IEnumerator playback;
 		private NSGIF gif = null;
+		private string tempPath = null;
 
 		void OnEnable()
 		{
@@ -27,17 +31,25 @@ namespace NSGIF
 			try
 			{
 				string path = Application.streamingAssetsPath + "/" + filename;
-#if UNITY_ANDROID  && !UNITY_EDITOR
-				// On Android streaming assets path is in the compressed jar; use WWW to uncompress.
-				WWW www = new WWW(path);
-				while(!www.isDone)
-					;
-				gif = new NSGIF(www.bytes);
-#else
-				gif = new NSGIF(path);
-				//gif = new NSGIF(System.IO.File.ReadAllBytes(path));
-#endif
+				// path = "file://" + path;
+				if (path.IndexOf("://", StringComparison.Ordinal) >= 0)
+				{
+					var req = UnityWebRequest.Get(path);
+					tempPath =  Path.Combine(Application.temporaryCachePath, filename);
+					path = tempPath;
+					req.downloadHandler = new DownloadHandlerFile(path);
+					req.SendWebRequest();
 
+					while (!req.isDone)
+						;
+
+					if (req.result != UnityWebRequest.Result.Success)
+					{
+						throw new IOException($"uri={req.uri}, result = {req.result}, error={req.error}");
+					}
+				}
+
+				gif = new NSGIF(path);
 				playback = Play();
 				StartCoroutine(playback);
 			}
@@ -66,6 +78,24 @@ namespace NSGIF
 			{
 				gif.Dispose();
 				gif = null;
+			}
+
+			if (!string.IsNullOrEmpty(tempPath))
+			{
+				if (File.Exists(tempPath))
+				{
+					try
+					{
+						File.SetAttributes(tempPath, FileAttributes.Normal);
+						File.Delete(tempPath);
+					}
+					catch (Exception e)
+					{
+						Debug.LogError($"{GetType()}.OnDisable: {e}");
+					}
+				}
+
+				tempPath = null;
 			}
 		}
 
