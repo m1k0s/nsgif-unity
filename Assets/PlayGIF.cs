@@ -14,9 +14,11 @@ namespace NSGIF
 		public string filename = "";
 
 		private Material gifMaterial;
-		private IEnumerator playback;
 		private NSGIF gif = null;
 		private string tempPath = null;
+
+		private float elapsedTime = 0;
+		private int animationTimeMillis = 0;
 
 		void OnEnable()
 		{
@@ -50,8 +52,7 @@ namespace NSGIF
 				}
 
 				gif = new NSGIF(path);
-				playback = Play();
-				StartCoroutine(playback);
+				gifMaterial.SetTexture(MAIN_TEX_ID, gif.frameTexture);
 			}
 			catch(System.Exception e)
 			{
@@ -62,12 +63,6 @@ namespace NSGIF
 
 		void OnDisable()
 		{
-			if (null != playback)
-			{
-				StopCoroutine(playback);
-				playback = null;
-			}
-
 			if (null != gifMaterial)
 			{
 				gifMaterial.SetTexture(MAIN_TEX_ID, null);
@@ -99,15 +94,32 @@ namespace NSGIF
 			}
 		}
 
-		IEnumerator Play()
+		void Update()
 		{
-			(Texture2D frame, int delayMillis) = gif.DecodeNextFrame();
-			gifMaterial.SetTexture(MAIN_TEX_ID, frame);
-
-			while (true)
+			if (gif.frameCount == 1)
 			{
-				yield return new WaitForSeconds(delayMillis / 1000.0f);
-				(frame, delayMillis) = gif.DecodeNextFrame();
+				return;
+			}
+
+			elapsedTime += Time.deltaTime;
+
+			float animationTime = animationTimeMillis / 1000.0f;
+			float waitTime = animationTime - elapsedTime;
+			if (waitTime > 0)
+			{
+				return;
+			}
+
+			int delayMillis = gif.DecodeNextFrame();
+
+			if (gif.frameIndex == 0)
+			{
+				animationTimeMillis = delayMillis;
+				elapsedTime = 0.0f;
+			}
+			else
+			{
+				animationTimeMillis += delayMillis;
 			}
 		}
 	}

@@ -8,6 +8,7 @@ namespace NSGIF
 	{
 		public int frameCount { get; private set; }
 		public int frameIndex { get; private set; }
+		public Texture2D frameTexture { get; private set; }
 
 		public void Dispose()
 		{
@@ -71,12 +72,32 @@ namespace NSGIF
 			}
 
 			frameCount = count;
-			frameIndex = -1;
+			frameIndex = 0;
+
+			int width;
+			int height;
+			int delay;
+			IntPtr frameData = NSGIF_Decode(handle, frameIndex, out width, out height, out delay, out status);
+
+			if(Status.OK != status)
+			{
+				Dispose();
+				throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
+			}
+
+			frameTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+			if (null == frameTexture)
+			{
+				throw new Exception($"Failed to create {width}x{height} Texture2D");
+			}
+
+			frameTexture.LoadRawTextureData(frameData, width * height * 4);
+			frameTexture.Apply(false, false);
 		}
 
-		public (Texture2D frame, int delayMillis) DecodeNextFrame()
+		public int DecodeNextFrame()
 		{
-			if (++frameIndex == frameCount)
+			if (++frameIndex >= frameCount)
 			{
 				frameIndex = 0;
 			}
@@ -92,24 +113,15 @@ namespace NSGIF
 				throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
 			}
 
-			if (null == frameTexture)
-			{
-				frameTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-				if (null == frameTexture)
-				{
-					throw new Exception($"Failed to create {width}x{height} Texture2D");
-				}
-			}
-
-			if (width != frameTexture.width || height != frameTexture.height)
-			{
-				throw new Exception($"Size mismatch {width}x{height} (was {frameTexture.width}x{frameTexture.height})");
-			}
+			// if (width != frameTexture.width || height != frameTexture.height)
+			// {
+			// 	throw new Exception($"Size mismatch {width}x{height} (was {frameTexture.width}x{frameTexture.height})");
+			// }
 
 			frameTexture.LoadRawTextureData(frameData, width * height * 4);
 			frameTexture.Apply(false, false);
 
-			return (frameTexture, delay * 10);
+			return delay * 10;
 		}
 
 		private enum Status
@@ -141,6 +153,5 @@ namespace NSGIF
 		[DllImport(__importName)] extern private static IntPtr NSGIF_Decode(IntPtr handle, int frameIndex, out int width, out int height, out int delay, out Status status);
 
 		private IntPtr handle;
-		private Texture2D frameTexture;
 	};
 }
