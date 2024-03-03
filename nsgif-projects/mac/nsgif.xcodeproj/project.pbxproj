@@ -7,16 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F701DF161E01C3DA00850655 /* libnsgif.c in Sources */ = {isa = PBXBuildFile; fileRef = F701DF131E01C3DA00850655 /* libnsgif.c */; };
-		F701DF171E01C3DA00850655 /* nsgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F701DF151E01C3DA00850655 /* nsgif.cpp */; };
+		F7D92B2C2B93DBE600C3BBE9 /* nsgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7D92B292B93DBE600C3BBE9 /* nsgif.cpp */; };
+		F7D92B2D2B93DBE600C3BBE9 /* libnsgif.c in Sources */ = {isa = PBXBuildFile; fileRef = F7D92B2A2B93DBE600C3BBE9 /* libnsgif.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		F701DF041E01C1F800850655 /* nsgif.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = nsgif.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		F701DF071E01C1F800850655 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
-		F701DF131E01C3DA00850655 /* libnsgif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libnsgif.c; path = ../../Assets/NSGIF/Plugins/iOS/libnsgif.c; sourceTree = "<group>"; };
-		F701DF141E01C3DA00850655 /* libnsgif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libnsgif.h; path = ../../Assets/NSGIF/Plugins/iOS/libnsgif.h; sourceTree = "<group>"; };
-		F701DF151E01C3DA00850655 /* nsgif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nsgif.cpp; path = ../../Assets/NSGIF/Plugins/iOS/nsgif.cpp; sourceTree = "<group>"; };
+		F701DF071E01C1F800850655 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F7D92B292B93DBE600C3BBE9 /* nsgif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nsgif.cpp; path = ../../Assets/NSGIF/iOS/nsgif.cpp; sourceTree = "<group>"; };
+		F7D92B2A2B93DBE600C3BBE9 /* libnsgif.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libnsgif.c; path = ../../Assets/NSGIF/iOS/libnsgif.c; sourceTree = "<group>"; };
+		F7D92B2B2B93DBE600C3BBE9 /* libnsgif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libnsgif.h; path = ../../Assets/NSGIF/iOS/libnsgif.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,9 +50,9 @@
 		F701DF0D1E01C1FE00850655 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				F701DF131E01C3DA00850655 /* libnsgif.c */,
-				F701DF141E01C3DA00850655 /* libnsgif.h */,
-				F701DF151E01C3DA00850655 /* nsgif.cpp */,
+				F7D92B2A2B93DBE600C3BBE9 /* libnsgif.c */,
+				F7D92B2B2B93DBE600C3BBE9 /* libnsgif.h */,
+				F7D92B292B93DBE600C3BBE9 /* nsgif.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -97,6 +97,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = F701DEFB1E01C1F800850655;
@@ -124,8 +125,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F701DF161E01C3DA00850655 /* libnsgif.c in Sources */,
-				F701DF171E01C3DA00850655 /* nsgif.cpp in Sources */,
+				F7D92B2C2B93DBE600C3BBE9 /* nsgif.cpp in Sources */,
+				F7D92B2D2B93DBE600C3BBE9 /* libnsgif.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
