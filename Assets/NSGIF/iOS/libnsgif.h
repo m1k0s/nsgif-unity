@@ -53,16 +53,17 @@ typedef struct gif_frame {
 
 /*	API for Bitmap callbacks
 */
-typedef void* (*gif_bitmap_cb_create)(int width, int height);
-typedef void (*gif_bitmap_cb_destroy)(void *bitmap);
-typedef unsigned char* (*gif_bitmap_cb_get_buffer)(void *bitmap);
-typedef void (*gif_bitmap_cb_set_opaque)(void *bitmap, bool opaque);
-typedef bool (*gif_bitmap_cb_test_opaque)(void *bitmap);
-typedef void (*gif_bitmap_cb_modified)(void *bitmap);
+typedef void* (*gif_bitmap_cb_create)(int width, int height, void *user_data);
+typedef void (*gif_bitmap_cb_destroy)(void *bitmap, void *user_data);
+typedef unsigned char* (*gif_bitmap_cb_get_buffer)(void *bitmap, void *user_data);
+typedef void (*gif_bitmap_cb_set_opaque)(void *bitmap, bool opaque, void *user_data);
+typedef bool (*gif_bitmap_cb_test_opaque)(void *bitmap, void *user_data);
+typedef void (*gif_bitmap_cb_modified)(void *bitmap, void *user_data);
 
 /*	The Bitmap callbacks function table
 */
 typedef struct gif_bitmap_callback_vt {
+	void* user_data;
 	gif_bitmap_cb_create bitmap_create;		/**< Create a bitmap. */
 	gif_bitmap_cb_destroy bitmap_destroy;		/**< Free a bitmap. */
 	gif_bitmap_cb_get_buffer bitmap_get_buffer;	/**< Return a pointer to the pixel data in a bitmap. */

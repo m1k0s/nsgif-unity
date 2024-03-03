@@ -66,6 +66,15 @@ extern "C"
 #	define PLUGIN_APIENTRY
 #endif
 
+extern "C"
+typedef PLUGIN_APICALL void* (PLUGIN_APIENTRY *BitmapCreate)(int width, int height, void* user_data);
+
+extern "C"
+typedef PLUGIN_APICALL void (PLUGIN_APIENTRY *BitmapDestroy)(void* bitmap, void* user_data);
+
+extern "C"
+typedef PLUGIN_APICALL unsigned char* (PLUGIN_APIENTRY *BitmapGetBuffer)(void* bitmap, void* user_data);
+
 class NSGIF_context
 {
 public:
@@ -83,18 +92,19 @@ public:
 		Status_FileMapFailure = GIF_END_OF_FRAME - 2
 	};
 	
-	NSGIF_context() :
+	NSGIF_context(BitmapCreate bitmap_create_cb, BitmapDestroy bitmap_destroy_cb, BitmapGetBuffer bitmap_get_buffer_cb, void* user_data) :
 		size_(0),
 		data_(NULL),
 		dataIsMapped_(false)
 	{
 		gif_bitmap_callback_vt bitmap_callbacks = {
-			&BitmapCreate,
-			&BitmapDestroy,
-			&BitmapGetBuffer,
-			NULL, //&BitmapSetOpaque,
-			NULL, //&BitmapTestOpaque,
-			NULL //&BitmapModified
+            user_data,
+            bitmap_create_cb,
+            bitmap_destroy_cb,
+            bitmap_get_buffer_cb,
+			NULL,
+			NULL,
+			NULL
 		};
 		
 		gif_create(&gif_, &bitmap_callbacks);
@@ -207,43 +217,6 @@ public:
 	}
 
 private:
-	static void* BitmapCreate(int width, int height)
-	{
-		void* bitmap = ::calloc(width * height, 4);
-		return bitmap;
-	}
-	
-	static void BitmapDestroy(void* bitmap)
-	{
-		assert(NULL != bitmap);
-		::free(bitmap);
-	}
-	
-	static unsigned char* BitmapGetBuffer(void* bitmap)
-	{
-		assert(NULL != bitmap);
-		return reinterpret_cast<unsigned char*>(bitmap);
-	}
-	
-	/*
-	static void BitmapSetOpaque(void* bitmap, bool opaque)
-	{
-		assert(NULL != bitmap);
-	}
-	
-	static bool BitmapTestOpaque(void* bitmap)
-	{
-		assert(NULL != bitmap);
-		return false;
-	}
-	
-	static void BitmapModified(void* bitmap)
-	{
-		assert(NULL != bitmap);
-	}
-	*/
-
-private:
 	gif_animation gif_;
 	size_t size_;
 	void* data_;
@@ -251,9 +224,9 @@ private:
 };
 
 extern "C"
-PLUGIN_APICALL intptr_t PLUGIN_APIENTRY NSGIF_Create()
+PLUGIN_APICALL intptr_t PLUGIN_APIENTRY NSGIF_Create(BitmapCreate bitmap_create_cb, BitmapDestroy bitmap_destroy_cb, BitmapGetBuffer bitmap_get_buffer_cb, void* user_data)
 {
-	return reinterpret_cast<intptr_t>(new NSGIF_context());
+	return reinterpret_cast<intptr_t>(new NSGIF_context(bitmap_create_cb, bitmap_destroy_cb, bitmap_get_buffer_cb, user_data));
 }
 
 extern "C"

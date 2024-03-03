@@ -1,6 +1,6 @@
-using UnityEngine;
 using System;
 using System.Runtime.InteropServices;
+using UnityEngine;
 
 namespace NSGIF
 {
@@ -9,6 +9,21 @@ namespace NSGIF
 		public int frameCount { get; private set; }
 		public int frameIndex { get; private set; }
 		public Texture2D frameTexture { get; private set; }
+
+		private void DestroyTexture()
+		{
+			if (null != frameTexture)
+			{
+				GameObject.DestroyImmediate(frameTexture);
+				frameTexture = null;
+			}
+		}
+
+		private unsafe byte* GetTextureBuffer()
+		{
+			var nativeArray = frameTexture.GetRawTextureData<byte>();
+			return (byte*)Unity.Collections.LowLevel.Unsafe.NativeArrayUnsafeUtility.GetUnsafePtr(nativeArray);
+		}
 
 		public void Dispose()
 		{
@@ -24,11 +39,12 @@ namespace NSGIF
 				handle = IntPtr.Zero;
 			}
 
-			if (null != frameTexture)
+			if (instance.IsAllocated)
 			{
-				GameObject.DestroyImmediate(frameTexture);
-				frameTexture = null;
+				instance.Free();
 			}
+
+			DestroyTexture();
 
 			if (disposing)
 			{
@@ -48,7 +64,11 @@ namespace NSGIF
 				throw new NullReferenceException("Filename is null");
 			}
 
-			handle = NSGIF_Create();
+			instance = GCHandle.Alloc(this);
+			unsafe
+			{
+				handle = NSGIF_Create(BitmapCreateDelegate, BitmapDestroyDelegate, BitmapGetBufferDelegate, GCHandle.ToIntPtr(instance));
+			}
 
 			if (IntPtr.Zero == handle)
 			{
@@ -84,15 +104,6 @@ namespace NSGIF
 				Dispose();
 				throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
 			}
-
-			frameTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-			if (null == frameTexture)
-			{
-				throw new Exception($"Failed to create {width}x{height} Texture2D");
-			}
-
-			frameTexture.LoadRawTextureData(frameData, width * height * 4);
-			frameTexture.Apply(false, false);
 		}
 
 		public int DecodeNextFrame()
@@ -113,15 +124,38 @@ namespace NSGIF
 				throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
 			}
 
-			// if (width != frameTexture.width || height != frameTexture.height)
-			// {
-			// 	throw new Exception($"Size mismatch {width}x{height} (was {frameTexture.width}x{frameTexture.height})");
-			// }
-
-			frameTexture.LoadRawTextureData(frameData, width * height * 4);
 			frameTexture.Apply(false, false);
 
 			return delay * 10;
+		}
+
+		[AOT.MonoPInvokeCallback(typeof(BitmapCreate))] 
+		private static unsafe byte* BitmapCreateDelegate(int width, int height, IntPtr userData)
+		{
+			var instance = GCHandle.FromIntPtr(userData).Target as NSGIF;
+			instance.DestroyTexture();
+			instance.frameTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+			if (null == instance.frameTexture)
+			{
+				Debug.LogError($"BitmapCreateDelegate({instance}): Failed to create {width}x{height} Texture2D");
+				return null;
+			}
+
+			return instance.GetTextureBuffer();
+		}
+
+		[AOT.MonoPInvokeCallback(typeof(BitmapDestroy))] 
+		private static void BitmapDestroyDelegate(IntPtr bitmap, IntPtr userData)
+		{
+			var instance = GCHandle.FromIntPtr(userData).Target as NSGIF;
+			instance.DestroyTexture();
+		}
+
+		[AOT.MonoPInvokeCallback(typeof(BitmapGetBuffer))] 
+		private static unsafe byte* BitmapGetBufferDelegate(IntPtr bitmap, IntPtr userData)
+		{
+			var instance = GCHandle.FromIntPtr(userData).Target as NSGIF;
+			return instance.GetTextureBuffer();
 		}
 
 		private enum Status
@@ -146,12 +180,17 @@ namespace NSGIF
 		private const string __importName = "nsgif";
 #endif
 
-		[DllImport(__importName)] extern private static IntPtr NSGIF_Create();
+		private unsafe delegate byte* BitmapCreate(int width, int height, IntPtr userData);
+		private delegate void BitmapDestroy(IntPtr bitmap, IntPtr userData);
+		private unsafe delegate byte* BitmapGetBuffer(IntPtr bitmap, IntPtr userData);
+
+		[DllImport(__importName)] extern private static IntPtr NSGIF_Create(BitmapCreate bitmapCreate, BitmapDestroy bitmapDestroy, BitmapGetBuffer bitmapGetBuffer, IntPtr userData);
 		[DllImport(__importName)] extern private static void NSGIF_InitializeFile(IntPtr handle, string filename, out int frameCount, out Status status);
 		[DllImport(__importName)] extern private static void NSGIF_InitializeBuffer(IntPtr handle, IntPtr data, int size, out int frameCount, out Status status);
 		[DllImport(__importName)] extern private static void NSGIF_Destroy(IntPtr handle);
 		[DllImport(__importName)] extern private static IntPtr NSGIF_Decode(IntPtr handle, int frameIndex, out int width, out int height, out int delay, out Status status);
 
 		private IntPtr handle;
+		private GCHandle instance;
 	};
 }
