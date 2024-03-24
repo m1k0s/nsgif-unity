@@ -187,7 +187,7 @@ public:
 			
 			if(GIF_OK == res)
 			{
-				frameCount = gif_.frame_count;
+				frameCount = gif_.frame_count_partial;
 			}
 			
 			return static_cast<Status>(res);
