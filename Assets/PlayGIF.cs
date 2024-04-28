@@ -122,5 +122,15 @@ namespace NSGIF
 				animationTimeMillis += delayMillis;
 			}
 		}
+
+#if UNITY_EDITOR
+		void OnDrawGizmosSelected()
+		{
+			if (!Application.isPlaying)
+			{
+				UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+			}
+		}
+#endif
 	}
 }
