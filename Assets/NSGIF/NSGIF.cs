@@ -17,6 +17,7 @@ namespace NSGIF
 				GameObject.DestroyImmediate(frameTexture);
 				frameTexture = null;
 			}
+			status = Status.Destroyed;
 		}
 
 		private unsafe byte* GetTextureBuffer()
@@ -76,7 +77,6 @@ namespace NSGIF
 			}
 
 			int count;
-			Status status;
 			NSGIF_InitializeFile(handle, filename, out count, out status);
 
 			if (Status.OK != status)
@@ -92,8 +92,13 @@ namespace NSGIF
 			}
 
 			frameCount = count;
-			frameIndex = 0;
+			frameIndex = -1;
 
+			// DecodeFrame();
+		}
+
+		private int DecodeFrame()
+		{
 			int width;
 			int height;
 			int delay;
@@ -104,29 +109,27 @@ namespace NSGIF
 				Dispose();
 				throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
 			}
+
+			return delay * 10;
 		}
 
 		public int DecodeNextFrame()
 		{
+			if (Status.OK != status)
+			{
+				throw new Exception($"Tryeing to decode while in an invalid status: {status.ToString()}");
+			}
+
 			if (++frameIndex >= frameCount)
 			{
 				frameIndex = 0;
 			}
 
-			Status status;
-			int width;
-			int height;
-			int delay; // Decoded frame delay (in 1/100th of a second as per GIF spec)
-			IntPtr frameData = NSGIF_Decode(handle, frameIndex, out width, out height, out delay, out status);
-
-			if(Status.OK != status)
-			{
-				throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
-			}
+			int delay = DecodeFrame();
 
 			frameTexture.Apply(false, false);
 
-			return delay * 10;
+			return delay;
 		}
 
 		[AOT.MonoPInvokeCallback(typeof(BitmapCreate))] 
@@ -192,5 +195,6 @@ namespace NSGIF
 
 		private IntPtr handle;
 		private GCHandle instance;
+		private Status status;
 	};
 }
