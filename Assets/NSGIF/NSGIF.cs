@@ -117,7 +117,7 @@ namespace NSGIF
 		{
 			if (Status.OK != status)
 			{
-				throw new Exception($"Tryeing to decode while in an invalid status: {status.ToString()}");
+				throw new Exception($"Trying to decode while in an invalid status: {status.ToString()}");
 			}
 
 			if (++frameIndex >= frameCount)
