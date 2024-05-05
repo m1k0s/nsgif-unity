@@ -161,22 +161,25 @@ namespace NSGIF
 
             float elapsedTime = 0.0f;
 
-            while(true)
+            while (true)
             {
                 float currentTime = Time.time;
                 elapsedTime += currentTime - lastTime;
                 lastTime = currentTime;
 
                 float animationTime = animationTimeMillis / 1000.0f;
-                float waitTime = animationTime - elapsedTime;
-                // Debug.Log($"index={gif.frameIndex}, animation={animationTime}, elapsed={elapsedTime}, wait={waitTime}");
-                if (waitTime > 0)
+                while (elapsedTime < animationTime)
                 {
-                    yield return new WaitForSeconds(waitTime);
+                    // WaitForSeconds annoyingly allocates... Skip frames instead
+                    yield return null;
                     if (null == gif)
                     {
+                        // If the gif instance was destroyed, stop
                         yield break;
                     }
+                    currentTime = Time.time;
+                    elapsedTime += currentTime - lastTime;
+                    lastTime = currentTime;
                 }
 
                 int delayMillis = gif.DecodeNextFrame();
@@ -184,9 +187,9 @@ namespace NSGIF
                 {
                     if (!loop)
                     {
+                        // Reached the end and not looping, stop
                         yield break;
                     }
-
                     animationTimeMillis = delayMillis;
                     elapsedTime = 0.0f;
                 }
