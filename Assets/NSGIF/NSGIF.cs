@@ -105,7 +105,7 @@ namespace NSGIF
             frame = 0;
         }
 
-        public int DecodeNextFrame()
+        public int DecodeNextFrame(bool apply = true)
         {
             if (Status.OK != status)
             {
@@ -125,7 +125,10 @@ namespace NSGIF
                 throw new Exception($"Failed to decode frame {frame}/{frameCount}: {status.ToString()}");
             }
 
-            texture.Apply(false, false);
+            if (apply)
+            {
+                texture.Apply(false, false);
+            }
 
             return delay;
         }
