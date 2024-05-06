@@ -15,13 +15,13 @@ namespace NSGIF
         public bool playOnEnable = true;
         public bool loop = false;
         
-        public Texture texture => gif?.frameTexture;
+        public Texture texture => gif?.texture;
         public int width => texture ? texture.width : 0;
         public int height => texture ? texture.height : 0;
         public bool isPaused => player == null;
         public bool isLooping => loop;
         public bool isPrepared => gif != null;
-        public int frame => gif != null ? gif.frameIndex : 0;
+        public int frame => gif != null ? gif.frame : -1;
         public int frameCount => gif != null ? gif.frameCount : 0;
 
         private Material gifMaterial;
@@ -151,7 +151,7 @@ namespace NSGIF
             int animationTimeMillis = gif.DecodeNextFrame();
 
             // After the first frame has been decoded, set it on the material
-            gifMaterial.SetTexture(MAIN_TEX_ID, gif.frameTexture);
+            gifMaterial.SetTexture(MAIN_TEX_ID, gif.texture);
 
             // Only one frame; stop
             if (gif.frameCount == 1)
@@ -183,7 +183,7 @@ namespace NSGIF
                 }
 
                 int delayMillis = gif.DecodeNextFrame();
-                if (gif.frameIndex == 0)
+                if (gif.frame == 0)
                 {
                     if (!loop)
                     {

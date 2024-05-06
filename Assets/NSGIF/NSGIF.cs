@@ -9,15 +9,15 @@ namespace NSGIF
     public class NSGIF : IDisposable
     {
         public int frameCount { get; private set; }
-        public int frameIndex { get; private set; }
-        public Texture2D frameTexture { get; private set; }
+        public int frame { get; private set; }
+        public Texture2D texture { get; private set; }
 
         private void DestroyTexture()
         {
-            if (null != frameTexture)
+            if (null != texture)
             {
-                GameObject.DestroyImmediate(frameTexture);
-                frameTexture = null;
+                GameObject.DestroyImmediate(texture);
+                texture = null;
             }
             status = Status.Destroyed;
         }
@@ -88,21 +88,21 @@ namespace NSGIF
             }
 
             frameCount = count;
-            frameIndex = -1;
+            frame = -1;
         }
 
-        private static int DecodeFrame(IntPtr handle, int frameIndex, out Status status)
+        private static int DecodeFrame(IntPtr handle, int frame, out Status status)
         {
             int width;
             int height;
             int delay;
-            IntPtr frameData = NSGIF_Decode(handle, frameIndex, out width, out height, out delay, out status);
+            IntPtr frameData = NSGIF_Decode(handle, frame, out width, out height, out delay, out status);
             return delay * 10;
         }
 
         public void Reset()
         {
-            frameIndex = 0;
+            frame = 0;
         }
 
         public int DecodeNextFrame()
@@ -112,20 +112,20 @@ namespace NSGIF
                 throw new Exception($"Trying to decode while in an invalid status: {status.ToString()}");
             }
 
-            if (++frameIndex >= frameCount)
+            if (++frame >= frameCount)
             {
                 Reset();
             }
 
-            int delay = DecodeFrame(handle, frameIndex, out status);
+            int delay = DecodeFrame(handle, frame, out status);
 
             if (Status.OK != status)
             {
                 Dispose();
-                throw new Exception($"Failed to decode frame {frameIndex}/{frameCount}: {status.ToString()}");
+                throw new Exception($"Failed to decode frame {frame}/{frameCount}: {status.ToString()}");
             }
 
-            frameTexture.Apply(false, false);
+            texture.Apply(false, false);
 
             return delay;
         }
@@ -135,14 +135,14 @@ namespace NSGIF
         {
             var instance = GCHandle.FromIntPtr(userData).Target as NSGIF;
             instance.DestroyTexture();
-            instance.frameTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-            if (null == instance.frameTexture)
+            instance.texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            if (null == instance.texture)
             {
                 Debug.LogError($"BitmapCreateDelegate({instance}): Failed to create {width}x{height} Texture2D");
                 return null;
             }
 
-            instance.frameTextureRawData = instance.frameTexture.GetRawTextureData<byte>();
+            instance.frameTextureRawData = instance.texture.GetRawTextureData<byte>();
             return (byte*)NativeArrayUnsafeUtility.GetUnsafePtr(instance.frameTextureRawData);
         }
 
