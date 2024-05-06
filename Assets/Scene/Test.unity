@@ -393,7 +393,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   filename: taylorTest.gif
   playOnEnable: 1
-  loop: 0
+  loop: 1
 --- !u!23 &522172285
 MeshRenderer:
   m_ObjectHideFlags: 0
