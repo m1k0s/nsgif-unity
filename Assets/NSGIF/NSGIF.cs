@@ -180,7 +180,7 @@ namespace NSGIF
         }
 
 #if UNITY_IPHONE && !UNITY_EDITOR
-		private const string __importName = "__Internal";
+        private const string __importName = "__Internal";
 #else
         private const string __importName = "nsgif";
 #endif

@@ -17,7 +17,7 @@ namespace NSGIF
         public bool loop = false;
         [Range(0.0f, 10.0f)]
         public float speed = 1.0f;
-        
+
         public Texture texture => gif?.texture;
         public int width => texture ? texture.width : 0;
         public int height => texture ? texture.height : 0;
@@ -26,7 +26,7 @@ namespace NSGIF
         public bool isPrepared => this.enabled && gif != null;
         public int frame => gif != null ? gif.frame : -1;
         public int frameCount => gif != null ? gif.frameCount : 0;
-        public string url  { get; private set; }
+        public string url { get; private set; }
 
         private Material gifMaterial;
         private NSGIF gif;
@@ -57,7 +57,7 @@ namespace NSGIF
                 StopCoroutine(player);
                 player = null;
             }
-            
+
             DestroyDecodeThread();
         }
 
@@ -104,7 +104,7 @@ namespace NSGIF
         {
             waitHandleMain = new EventWaitHandle(false, EventResetMode.AutoReset);
             waitHandleDecode = new EventWaitHandle(false, EventResetMode.AutoReset);
-            
+
             decodeThread = new Thread(Decode);
             decodeThread.Name = $"{GetType()}.{gameObject.name}";
             decodeThread.Start();
@@ -148,7 +148,7 @@ namespace NSGIF
                 }
             }
         }
-        
+
         private IEnumerator Prepare()
         {
             string path = Application.streamingAssetsPath + "/" + filename;
@@ -162,7 +162,7 @@ namespace NSGIF
                 req.downloadHandler = new DownloadHandlerFile(path);
                 tempPath = path;
                 yield return req.SendWebRequest();
-                
+
                 if (req.result != UnityWebRequest.Result.Success)
                 {
                     Debug.LogError($"{GetType()}.Prepare: uri={req.uri}, result = {req.result}, error={req.error}");
@@ -170,7 +170,7 @@ namespace NSGIF
                     yield break;
                 }
             }
-            
+
             try
             {
                 gif = new NSGIF(path);
@@ -180,13 +180,13 @@ namespace NSGIF
                 Debug.LogError($"{GetType()}.Prepare: {e}");
                 this.enabled = false;
             }
-            
+
             if (this.enabled && playOnEnable)
             {
                 Play();
             }
         }
-            
+
         private IEnumerator Playback()
         {
             if (null == gif)
@@ -231,7 +231,7 @@ namespace NSGIF
                     lastTime = currentTime;
                 }
 
-                
+
                 waitHandleDecode.Set();
                 waitHandleMain.WaitOne();
                 gif.texture.Apply(false, false);
@@ -251,7 +251,7 @@ namespace NSGIF
                     animationTimeMillis += delayMillis;
                 }
             }
-            
+
         abort:
             DestroyDecodeThread();
             yield break;
@@ -260,9 +260,9 @@ namespace NSGIF
         private void Decode()
         {
             decoderRunning = true;
-            
+
             waitHandleDecode.WaitOne();
-            
+
             while (decoderRunning)
             {
                 delayMillis = gif.DecodeNextFrame(false);
