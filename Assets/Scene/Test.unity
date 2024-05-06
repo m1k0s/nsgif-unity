@@ -394,6 +394,7 @@ MonoBehaviour:
   filename: taylorTest.gif
   playOnEnable: 1
   loop: 1
+  speed: 1
 --- !u!23 &522172285
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1004,7 +1005,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   filename: bg-transparent.gif
   playOnEnable: 1
-  loop: 0
+  loop: 1
+  speed: 1
 --- !u!23 &1536289160
 MeshRenderer:
   m_ObjectHideFlags: 0
