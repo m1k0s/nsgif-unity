@@ -20,14 +20,14 @@ namespace NSGIF
         public int height => texture ? texture.height : 0;
         public bool isPaused => player == null;
         public bool isLooping => loop;
-        public bool isPrepared => gif != null;
+        public bool isPrepared => this.enabled && gif != null;
         public int frame => gif != null ? gif.frame : -1;
         public int frameCount => gif != null ? gif.frameCount : 0;
+        public string url  { get; private set; }
 
         private Material gifMaterial;
-        private NSGIF gif = null;
-        private string tempPath = null;
-
+        private NSGIF gif;
+        private string tempPath;
         private Coroutine player;
 
         public void Play()
@@ -106,8 +106,9 @@ namespace NSGIF
         private IEnumerator Prepare()
         {
             string path = Application.streamingAssetsPath + "/" + filename;
-            path = "file://" + path;
+            // path = "file://" + path;
 
+            url = path;
             if (path.IndexOf("://", StringComparison.Ordinal) >= 0)
             {
                 var req = UnityWebRequest.Get(path);
