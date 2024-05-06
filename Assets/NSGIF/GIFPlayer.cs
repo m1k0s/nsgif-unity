@@ -14,6 +14,8 @@ namespace NSGIF
         public string filename = "";
         public bool playOnEnable = true;
         public bool loop = false;
+        [Range(0.0f, 10.0f)]
+        public float speed = 1.0f;
         
         public Texture texture => gif?.texture;
         public int width => texture ? texture.width : 0;
@@ -165,7 +167,7 @@ namespace NSGIF
             while (true)
             {
                 float currentTime = Time.time;
-                elapsedTime += currentTime - lastTime;
+                elapsedTime += (currentTime - lastTime) * speed;
                 lastTime = currentTime;
 
                 float animationTime = animationTimeMillis / 1000.0f;
@@ -179,7 +181,7 @@ namespace NSGIF
                         yield break;
                     }
                     currentTime = Time.time;
-                    elapsedTime += currentTime - lastTime;
+                    elapsedTime += (currentTime - lastTime) * speed;
                     lastTime = currentTime;
                 }
 
