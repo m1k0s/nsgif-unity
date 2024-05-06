@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -31,6 +32,11 @@ namespace NSGIF
         private NSGIF gif;
         private string tempPath;
         private Coroutine player;
+        private Thread decodeThread;
+        private EventWaitHandle waitHandleMain;
+        private EventWaitHandle waitHandleDecode;
+        private int delayMillis;
+        private bool decoderRunning;
 
         public void Play()
         {
@@ -40,6 +46,7 @@ namespace NSGIF
             }
 
             Pause();
+
             player = StartCoroutine(Playback());
         }
 
@@ -50,6 +57,8 @@ namespace NSGIF
                 StopCoroutine(player);
                 player = null;
             }
+            
+            DestroyDecodeThread();
         }
 
         public void Stop()
@@ -86,6 +95,41 @@ namespace NSGIF
             {
                 DeleteFile(tempPath);
                 tempPath = null;
+            }
+
+            DestroyDecodeThread();
+        }
+
+        private void InitialiseDecodeThread()
+        {
+            waitHandleMain = new EventWaitHandle(false, EventResetMode.AutoReset);
+            waitHandleDecode = new EventWaitHandle(false, EventResetMode.AutoReset);
+            
+            decodeThread = new Thread(Decode);
+            decodeThread.Name = $"{GetType()}.{gameObject.name}";
+            decodeThread.Start();
+        }
+
+        private void DestroyDecodeThread()
+        {
+            if (decodeThread != null)
+            {
+                // Let the thread naturally exit (rather than abort it)
+                decoderRunning = false;
+                waitHandleDecode?.Set();
+                decodeThread = null;
+            }
+
+            if (waitHandleMain != null)
+            {
+                waitHandleMain.Dispose();
+                waitHandleMain = null;
+            }
+
+            if (waitHandleDecode != null)
+            {
+                waitHandleDecode.Dispose();
+                waitHandleDecode = null;
             }
         }
 
@@ -162,6 +206,8 @@ namespace NSGIF
                 yield break;
             }
 
+            InitialiseDecodeThread();
+
             float elapsedTime = 0.0f;
 
             while (true)
@@ -178,20 +224,24 @@ namespace NSGIF
                     if (null == gif)
                     {
                         // If the gif instance was destroyed, stop
-                        yield break;
+                        goto abort;
                     }
                     currentTime = Time.time;
                     elapsedTime += (currentTime - lastTime) * speed;
                     lastTime = currentTime;
                 }
 
-                int delayMillis = gif.DecodeNextFrame();
+                
+                waitHandleDecode.Set();
+                waitHandleMain.WaitOne();
+                gif.texture.Apply(false, false);
+
                 if (gif.frame == 0)
                 {
                     if (!loop)
                     {
                         // Reached the end and not looping, stop
-                        yield break;
+                        goto abort;
                     }
                     animationTimeMillis = delayMillis;
                     elapsedTime = 0.0f;
@@ -200,6 +250,23 @@ namespace NSGIF
                 {
                     animationTimeMillis += delayMillis;
                 }
+            }
+            
+        abort:
+            DestroyDecodeThread();
+            yield break;
+        }
+
+        private void Decode()
+        {
+            decoderRunning = true;
+            
+            waitHandleDecode.WaitOne();
+            
+            while (decoderRunning)
+            {
+                delayMillis = gif.DecodeNextFrame(false);
+                WaitHandle.SignalAndWait(waitHandleMain, waitHandleDecode);
             }
         }
 
